@@ -1,0 +1,46 @@
+// Initialization
+SAP 5, 0, 500         // Set acceleration
+SAP 4, 0, 2000        // Set maximum speed
+
+// Main loop
+loop:
+	GIO 0, 0              // Read the state of input 0
+	JC ZE, loop      // Jump back to loop if input 0 is not triggered
+	SGP 43, 2, 300		// set a global variable for ~5 sec loop
+	// Call the move routine
+	CSUB move_routine
+	JA loop           // Jump back to the main loop
+
+// Move routine
+move_routine:
+	SGP 42, 2, 400 		// set a global variable for ~4 sec loop
+	MVP REL, 0, 294000  // Move motor for 12" of electrode
+	CSUB check
+	
+check:	//checks if pedal is pressed during move routine
+	GIO 0,0
+	JC NZ, stopper	//jumps to stopper subroutine if input is pressed
+	GAP 3, 0			//checks if motor is still moving
+	JC ZE, pause
+	JC NZ, check
+
+stopper:		//checks if pedal is pressed during movement to stop the motor
+	MST 0	// stop motor
+	GIO 0,0
+	JC NZ, stopper
+	JC ZE, move_routine
+
+pause:		//checks for a pedal press during the pause, if none then continue making sections
+	GIO 0,0
+	JC NZ, break
+	WAIT TICKS, 0, 1
+	DJNZ 42, pause
+	JA move_routine
+	
+break:		//checks if pedal is pressed for ~5 seconds continuously duruing pause
+	GIO 0,0
+	JC ZE, move_routine
+	WAIT TICKS, 0, 1
+	DJNZ 43, break
+	WAIT TICKS, 0, 300
+	JA loop

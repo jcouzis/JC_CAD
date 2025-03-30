@@ -1,0 +1,31 @@
+INIT:
+    SGP 0, 2, 0         // Set Global Parameter 0 to 0 (motor stopped)
+
+CHECK_BUTTON_PRESS:
+    GIO 0,0          // Read Digital Input 0
+    JC NZ, CHECK_BUTTON_PRESS // Wait until button is released
+
+WAIT_FOR_PRESS:
+    GIO 0,0          // Read Digital Input 0
+    JC ZE, WAIT_FOR_PRESS  // Wait until button is pressed again
+
+    GGP 0, 2            // Read Global Parameter 0
+    JC NZ, STOP_MOTOR // If GP 0 is 1, stop the motor
+    JA START_MOTOR    // If GP 0 is 0, start the motor
+
+START_MOTOR:
+    ROR 0, 1475      // Rotate Motor 0 at 1700 RPM
+    SGP 0, 2, 1         // Set GP 0 to 1 (motor running)
+    JA WAIT_FOR_RELEASE
+
+STOP_MOTOR:
+    MST 0            // Stop Motor 0
+    SGP 0, 2, 0         // Set GP 0 to 0 (motor stopped)
+    JA WAIT_FOR_RELEASE
+
+WAIT_FOR_RELEASE:
+    GIO 0,0          // Read Digital Input 0
+    JC NZ, WAIT_FOR_RELEASE // Wait until button is released
+    JA WAIT_FOR_PRESS  // Go back to wait for next button press
+
+	
